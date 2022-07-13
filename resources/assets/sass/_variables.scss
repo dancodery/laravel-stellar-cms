@@ -1,0 +1,28 @@
+// Body
+$body-bg: #f5f8fa;
+
+// Borders
+$laravel-border-color: darken($body-bg, 10%);
+$list-group-border-color: $laravel-border-color;
+$navbar-light-toggler-border-color: $laravel-border-color;
+$card-border-color: $laravel-border-color;
+
+// Brands
+$primary: #3097D1;
+$info: #8eb4cb;
+$success: #2ab27b;
+$warning: #cbb956;
+$danger: #bf5329;
+
+// Typography
+$font-family-sans-serif: "Raleway", sans-serif;
+$font-size-base: 0.9rem;
+$line-height-base: 1.2;
+$gray-900: #636b6f;
+
+// Navbar
+$navbar-light-brand-color:         $gray-900;
+$navbar-light-brand-hover-color:   rgba(0, 0, 0, 0.9);
+
+// Cards
+$card-cap-bg: #fff;
