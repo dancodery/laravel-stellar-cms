@@ -2,8 +2,8 @@
 
 namespace App\Models;
 
-use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -43,33 +43,23 @@ class User extends Authenticatable
     ];
 
     // user has many posts
-    public function posts()
+    public function posts(): HasMany
     {
-        return $this->hasMany('App\Models\Posts','user_id');
-    }
-    // user has many comments
-    public function comments()
-    {
-        return $this->hasMany('App\Models\Comments','from_user');
+        return $this->hasMany(Post::class, 'user_id');
     }
 
-    public function can_post()
+    public function comments(): HasMany
     {
-        $role = $this->role;
-        if($role == 'author' || $role == 'admin')
-        {
-            return true;
-        }
-        return false;
+        return $this->hasMany(Comment::class, 'from_user');
     }
 
-    public function is_admin()
+    public function can_post(): bool
     {
-        $role = $this->role;
-        if($role == 'admin')
-        {
-            return true;
-        }
-        return false;
+        return $this->role === 'author' || $this->role === 'admin';
+    }
+
+    public function is_admin(): bool
+    {
+        return $this->role === 'admin';
     }
 }
