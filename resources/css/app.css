@@ -1,0 +1,21 @@
+@import "bootstrap/dist/css/bootstrap.min.css";
+
+.list-group {
+    margin-bottom: 20px;
+}
+
+h2 {
+    margin-top: 1rem;
+}
+
+.card {
+    margin-bottom: 22px;
+}
+
+.card-header {
+    color: #333;
+}
+
+a {
+    text-decoration: none;
+}
