@@ -10,7 +10,7 @@ Add New Post
                 <h2>@yield('title')</h2>
             </div>
             <div class="card-body">
-                <form action="/new-post" method="post">
+                <form action="{{ route('posts.store') }}" method="post">
                     @csrf
                     <div class="mb-3">
                         <input required="required" value="{{ old('title') }}" placeholder="Enter title here" type="text" name = "title" class="form-control" />

@@ -14,11 +14,9 @@
         <div class="card">
             <div class="card-header">
                 @if(!Auth::guest() && ($post->user_id == Auth::user()->id || Auth::user()->is_admin()))
-                    @if($post->active == '1')
-                        <button class="btn btn-default" style="float: right"><a href="{{ url('edit/'.$post->slug)}}">Edit Post</a></button>
-                    @else
-                        <button class="btn btn-default" style="float: right"><a href="{{ url('edit/'.$post->slug)}}">Edit Draft</a></button>
-                    @endif
+                    <a href="{{ route('posts.edit', $post) }}" class="btn btn-outline-secondary float-end">
+                        {{ $post->active == '1' ? 'Edit Post' : 'Edit Draft' }}
+                    </a>
                 @endif
                 <h2>@yield('title')</h2>
                 <p>{{ $post->created_at->format('M d,Y \a\t h:i a') }} By <a href="{{ url('/user/'.$post->user_id . '/posts')}}">{{ $post->author->name }}</a></p>
@@ -26,7 +24,7 @@
             <div class="card-body">
                 @if($post)
                     <div>
-                        {!! $post->body !!}
+                        {!! nl2br(e($post->body)) !!}
                     </div>
                     <div>
                         <h2>Leave a comment</h2>
@@ -36,13 +34,10 @@
                         <p>Login to Comment</p>
                     @else
                         <div class="card-body">
-                            <form method="post" action="/comment/add">
+                            <form method="post" action="{{ route('comments.store', $post) }}">
                                 @csrf
-                                <input type="hidden" name="on_post" value="{{ $post->id }}">
-                                <input type="hidden" name="slug" value="{{ $post->slug }}">
-
                                 <div class="mb-3">
-                                    <textarea required="required" placeholder="Enter comment here" name="body" class="form-control"></textarea>
+                                    <textarea required="required" placeholder="Enter comment here" name="body" class="form-control">{{ old('body') }}</textarea>
                                 </div>
                                 <input type="submit" name="post_comment" class="btn btn-success" value="Post" />
                             </form>

@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Route;
 
 use App\Http\Controllers\PostController;
 use App\Http\Controllers\UserController;
-use \App\Http\Controllers\CommentController;
+use App\Http\Controllers\CommentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -21,26 +21,15 @@ Auth::routes();
 
 Route::get('/', [PostController::class, 'index'])->name('home');
 
-// check for logged in user
 Route::middleware('auth')->group(function () {
-    Route::controller(PostController::class)->group(function () {
-        // show new post form
-        Route::get('new-post','create');
-        // save new post
-        Route::post('new-post','store');
-        // edit post form
-        Route::get('edit/{slug}','edit');
-        // update post
-        Route::post('update','update');
-        // delete post
-        Route::get('delete/{id}','destroy');
-    });
-    // add comment
-    Route::post('comment/add', [CommentController::class, 'store']);
+    Route::get('new-post', [PostController::class, 'create'])->name('posts.create');
+    Route::post('new-post', [PostController::class, 'store'])->name('posts.store');
+    Route::get('edit/{post:slug}', [PostController::class, 'edit'])->name('posts.edit');
+    Route::put('posts/{post}', [PostController::class, 'update'])->name('posts.update');
+    Route::delete('posts/{post}', [PostController::class, 'destroy'])->name('posts.destroy');
+    Route::post('posts/{post}/comments', [CommentController::class, 'store'])->name('comments.store');
 });
 
-// display list of posts
 Route::get('user/{id}/posts', [UserController::class, 'user_posts_all'])->where('id', '[0-9]+');
 
-// display single post
-Route::get('/{slug}', [PostController::class, 'show'])->where('slug', '[A-Za-z0-9-_]+')->name('post');
+Route::get('/{post:slug}', [PostController::class, 'show'])->where('post', '[A-Za-z0-9-_]+')->name('post');

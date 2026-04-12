@@ -2,12 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Posts;
-use App\Models\Comments;
-use Redirect;
-use App\Http\Requests;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\StoreCommentRequest;
+use App\Models\Comment;
+use App\Models\Post;
 
 class CommentController extends Controller
 {
@@ -21,14 +18,14 @@ class CommentController extends Controller
         $this->middleware('auth');
     }
 
-    public function store(Request $request)
-	{
-		//on_post, from_user, body
-		$input['from_user'] = $request->user()->id;
-		$input['on_post'] = $request->input('on_post');
-		$input['body'] = $request->input('body');
-		$slug = $request->input('slug');
-		Comments::create($input);
-		return redirect($slug)->with('message', 'Comment published');
-	}
+    public function store(StoreCommentRequest $request, Post $post)
+    {
+        Comment::create([
+            'from_user' => $request->user()->id,
+            'on_post' => $post->id,
+            'body' => trim(strip_tags($request->validated('body'))),
+        ]);
+
+        return redirect()->route('post', $post)->with('message', 'Comment published');
+    }
 }

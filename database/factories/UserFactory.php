@@ -22,6 +22,7 @@ class UserFactory extends Factory
             'email' => fake()->safeEmail(),
             'email_verified_at' => now(),
             'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+            'role' => 'author',
             'remember_token' => Str::random(10),
         ];
     }
@@ -38,5 +39,15 @@ class UserFactory extends Factory
                 'email_verified_at' => null,
             ];
         });
+    }
+
+    public function admin(): static
+    {
+        return $this->state(fn () => ['role' => 'admin']);
+    }
+
+    public function subscriber(): static
+    {
+        return $this->state(fn () => ['role' => 'subscriber']);
     }
 }

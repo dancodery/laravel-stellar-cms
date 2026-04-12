@@ -1,121 +1,121 @@
 <?php
+
 namespace App\Http\Controllers;
 
-use Illuminate\Support\Facades\Redirect;
-use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\StorePostRequest;
+use App\Http\Requests\UpdatePostRequest;
+use App\Models\Post;
 use Illuminate\Support\Str;
-
-use App\Models\Posts;
-use App\Models\User;
 
 class PostController extends Controller
 {
-	/**
-     * Returns index site with latest views
-     *
-     * @param void
-     * @return \Illuminate\View\View
-     */
-	public function index() {
-		//fetch 5 posts from database which are active and latest
-		$posts = Posts::where('active', 1)->orderBy('created_at','desc')->paginate(5);
-		//page heading
-		$title = 'Latest Posts';
-		//return home.blade.old.php template from resources/views folder
-		return view('home')->withPosts($posts)->withTitle($title);
-	}
+    public function index()
+    {
+        $posts = Post::query()
+            ->where('active', 1)
+            ->with('author')
+            ->latest()
+            ->paginate(5);
 
-	public function create(Request $request) {
-		// if user can post i.e. user is admin or author
-		if($request->user()->can_post())
-		{
-		  return view('posts.create');
-		}
-		else
-		{
-		  return redirect('/')->withErrors('You have not sufficient permissions for writing post');
-		}
-	}
+        return view('home')->withPosts($posts)->withTitle('Latest Posts');
+    }
 
-	public function store(Request $request) {
-		$post = new Posts();
-		$post->title = $request->get('title');
-		$post->body = $request->get('body');
-		$post->slug = Str::slug($post->title, '-');
-		$post->user_id = $request->user()->id;
-		if($request->has('save')) {
-            $post->active = 0;
-            $post->published_at = null;
-            $message = 'Post saved successfully';
-		} else {
-            $post->active = 1;
-            $post->published_at = new \DateTime;
-            $message = 'Post published successfully';
-		}
-		$post->save();
-		return redirect('edit/'.$post->slug)->withMessage($message);
-	}
+    public function create()
+    {
+        $this->authorize('create', Post::class);
 
-	public function show($slug) {
-		$post = Posts::where('slug', $slug)->first();
-		if(!$post) {
-		   return redirect('/')->withErrors('requested page not found');
-		}
-		$comments = $post->comments;
-		return view('posts.show')->withPost($post)->withComments($comments);
-	}
+        return view('posts.create');
+    }
 
-	public function edit(Request $request, $slug) {
-		$post = Posts::where('slug', $slug)->first();
-		if($post && ($request->user()->id == $post->user_id || $request->user()->is_admin()))
-            return view('posts.edit')->with('post',$post);
-		return redirect('/')->withErrors('you have not sufficient permissions');
-	}
+    public function store(StorePostRequest $request)
+    {
+        $this->authorize('create', Post::class);
 
-	public function update(Request $request) {
-		$post_id = $request->input('post_id');
-		$post = Posts::find($post_id);
-		if($post && ($post->user_id == $request->user()->id || $request->user()->is_admin())) {
-            $title = $request->input('title');
-		    $slug = Str::slug($title, '-');
-            $duplicate = Posts::where('slug', $slug)->first();
-		    if($duplicate) {
-		        if($duplicate->id != $post_id) {
-		            return redirect('edit/'.$post->slug)->withErrors('Title already exists.')->withInput();
-		        }
-		    } else {
-                $post->slug = $slug;
-            }
-		    $post->title = $title;
-		    $post->body = $request->input('body');
-		    if($request->has('save')) {
-		        $post->active = 0;
-		        $message = 'Post saved successfully';
-		        $landing = 'edit/'.$post->slug;
-		    } else {
-		        $post->active = 1;
-		        $message = 'Post updated successfully';
-		        $landing = $post->slug;
-		    }
-		    $post->save();
-            return redirect($landing)->withMessage($message);
-		} else {
-		    return redirect('/')->withErrors('you have not sufficient permissions');
-		}
-	}
+        $data = $request->validated();
+        $isDraft = $request->has('save');
 
-	public function destroy(Request $request, $id) {
-		$post = Posts::find($id);
-		if($post && ($post->user_id == $request->user()->id || $request->user()->is_admin()))
-		{
-		  $post->delete();
-		  $data['message'] = 'Post deleted Successfully';
-		}
-		else
-		{
-		  $data['errors'] = 'Invalid Operation. You have not sufficient permissions';
-		}
-		return redirect('/')->with($data);
-	}
+        $post = Post::create([
+            'title' => trim($data['title']),
+            'body' => $this->sanitizeText($data['body']),
+            'slug' => $this->generateUniqueSlug($data['title']),
+            'user_id' => $request->user()->id,
+            'active' => $isDraft ? 0 : 1,
+            'published_at' => $isDraft ? null : now(),
+        ]);
+
+        $message = $isDraft ? 'Post saved successfully' : 'Post published successfully';
+
+        return redirect()->route('posts.edit', $post)->withMessage($message);
+    }
+
+    public function show(Post $post)
+    {
+        $comments = $post->comments()->with('author')->latest()->get();
+
+        return view('posts.show')->withPost($post)->withComments($comments);
+    }
+
+    public function edit(Post $post)
+    {
+        $this->authorize('update', $post);
+
+        return view('posts.edit')->with('post', $post);
+    }
+
+    public function update(UpdatePostRequest $request, Post $post)
+    {
+        $this->authorize('update', $post);
+
+        $data = $request->validated();
+        $isDraft = $request->has('save');
+        $slug = $this->generateUniqueSlug($data['title'], $post->id);
+
+        $post->fill([
+            'title' => trim($data['title']),
+            'body' => $this->sanitizeText($data['body']),
+            'slug' => $slug,
+            'active' => $isDraft ? 0 : 1,
+            'published_at' => $isDraft ? null : now(),
+        ]);
+        $post->save();
+
+        $message = $isDraft ? 'Post saved successfully' : 'Post updated successfully';
+        $landing = $isDraft ? route('posts.edit', $post) : route('post', $post);
+
+        return redirect($landing)->withMessage($message);
+    }
+
+    public function destroy(Post $post)
+    {
+        $this->authorize('delete', $post);
+
+        $post->delete();
+
+        return redirect('/')->with('message', 'Post deleted successfully');
+    }
+
+    private function sanitizeText(string $value): string
+    {
+        return trim(strip_tags($value));
+    }
+
+    private function generateUniqueSlug(string $title, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($title, '-');
+        $base = $base !== '' ? $base : 'post';
+        $slug = $base;
+        $counter = 2;
+
+        while (
+            Post::query()
+                ->when($ignoreId !== null, fn ($query) => $query->where('id', '!=', $ignoreId))
+                ->where('slug', $slug)
+                ->exists()
+        ) {
+            $slug = $base.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
 }
