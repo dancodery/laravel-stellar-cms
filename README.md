@@ -22,6 +22,16 @@ A simple blog content management system built with Laravel.
 - Basic XSS hardening by sanitizing user-provided post/comment content
 - English UI and validation messages
 
+## Reusable package (WIP)
+
+This repo also contains an **extractable Laravel package** version of the blog under:
+
+- `packages/stellar-cms`
+
+The package registers its own routes (`/blog` by default), views and migrations via `Stellar\\Cms\\StellarCmsServiceProvider`.
+
+See `packages/stellar-cms/README.md` for installation options (Composer package vs. local path repository).
+
 ## Requirements
 
 - PHP `>= 8.3`

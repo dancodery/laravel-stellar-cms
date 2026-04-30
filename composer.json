@@ -20,6 +20,7 @@
     "autoload": {
         "psr-4": {
             "App\\": "app/",
+            "Stellar\\Cms\\": "packages/stellar-cms/src/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         }

@@ -185,6 +185,7 @@ return [
         /*
          * Package Service Providers...
          */
+        Stellar\Cms\StellarCmsServiceProvider::class,
 
         /*
          * Application Service Providers...
